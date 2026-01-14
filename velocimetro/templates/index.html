@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel Veicular</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0f172a;
+    color: #e5e7eb;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.box {
+    background: #020617;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+.big {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.bar {
+    width: 100%;
+    height: 18px;
+    background: #1e293b;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.2s;
+}
+
+.acc { background: #38bdf8; }
+.vel { background: #22c55e; }
+.dist { background: #facc15; }
+
+#volante {
+    width: 120px;
+    height: 120px;
+    border: 8px solid #e5e7eb;
+    border-radius: 50%;
+    margin: 15px auto;
+    position: relative;
+    transition: transform 0.2s;
+}
+#volante::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 40px;
+    background: #e5e7eb;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚗 Painel Veicular em Tempo Real</h1>
+
+<div class="dashboard">
+
+    <!-- ESTADO -->
+    <div class="box">
+        <h3>Estado do Veículo</h3>
+        <div id="estado" class="big">---</div>
+    </div>
+
+    <!-- DIREÇÃO -->
+    <div class="box">
+        <h3>Direção</h3>
+        <div id="volante"></div>
+        <div id="curva" class="big">Reta</div>
+    </div>
+
+    <!-- ACELERAÇÃO -->
+    <div class="box">
+        <h3>Aceleração</h3>
+        <div class="bar"><div id="accBar" class="fill acc"></div></div>
+        <div id="accText">0.0 m/s²</div>
+    </div>
+
+    <!-- VELOCIDADE -->
+    <div class="box">
+        <h3>Velocidade</h3>
+        <div class="bar"><div id="velBar" class="fill vel"></div></div>
+        <div id="velText">0.0 km/h</div>
+    </div>
+
+    <!-- DISTÂNCIA -->
+    <div class="box" style="grid-column: span 2;">
+        <h3>Distância</h3>
+        <div class="bar"><div id="distBar" class="fill dist"></div></div>
+        <div id="distText">---</div>
+    </div>
+
+</div>
+
+<script>
+async function atualizar() {
+    try {
+        const r = await fetch("/dados");
+        const d = await r.json();
+
+        // Estado
+        document.getElementById("estado").innerText = d.estado;
+
+        // Aceleração
+        let acc = Math.abs(d.acel);
+        let accPerc = Math.min(acc / 5 * 100, 100);
+        document.getElementById("accBar").style.width = accPerc + "%";
+        document.getElementById("accText").innerText = d.acel.toFixed(2) + " m/s²";
+
+        // Velocidade
+        let vel_kmh = d.vel * 3.6;
+        let velPerc = Math.min(vel_kmh / 120 * 100, 100);
+        document.getElementById("velBar").style.width = velPerc + "%";
+        document.getElementById("velText").innerText = vel_kmh.toFixed(1) + " km/h";
+
+        // Distância
+        if (d.dist < 0) {
+            document.getElementById("distText").innerText = "Fora de alcance";
+            document.getElementById("distBar").style.width = "0%";
+        } else {
+            let distPerc = Math.max(0, 100 - d.dist * 20);
+            document.getElementById("distBar").style.width = distPerc + "%";
+            document.getElementById("distText").innerText = d.dist.toFixed(2) + " m";
+        }
+
+        // Direção / volante
+        let volante = document.getElementById("volante");
+        document.getElementById("curva").innerText = d.curva;
+
+        if (d.curva === "Direita") volante.style.transform = "rotate(30deg)";
+        else if (d.curva === "Esquerda") volante.style.transform = "rotate(-30deg)";
+        else volante.style.transform = "rotate(0deg)";
+
+    } catch (e) {
+        console.log("Erro:", e);
+    }
+}
+
+// Atualização rápida (quase tempo real)
+setInterval(atualizar, 100);
+</script>
+
+</body>
+</html>
