@@ -31,7 +31,7 @@ Ele foi projetado para melhorar a **segurança na condução**, auxiliar no **es
   - Dashboard de monitoramento amigável
 
 - 📡 **Conectividade Sem Fio**
-  - ESP32 com comunicação Wi-Fi
+  - ESP32 com localhost
 
 ---
 
